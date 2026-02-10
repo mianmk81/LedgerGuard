@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Write",
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "Task",
+      "Bash(npm install:*)",
+      "Bash(git -C threadweaver init:*)"
+    ]
+  }
+}

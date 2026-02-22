@@ -1,0 +1,145 @@
+{
+  "version": "granger_v1",
+  "trained_at": "2026-02-22T03:57:19.022968",
+  "n_days": 189,
+  "p_threshold": 0.05,
+  "max_lag": 7,
+  "edges": {
+    "supplier_delay_rate\u2192delivery_delay_rate": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "supplier_delay_rate\u2192fulfillment_backlog": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "order_volume\u2192fulfillment_backlog": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "fulfillment_backlog\u2192delivery_delay_rate": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "delivery_delay_rate\u2192ticket_volume": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "ticket_volume\u2192ticket_backlog": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "ticket_volume\u2192churn_proxy": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "churn_proxy\u2192daily_revenue": {
+      "strength": 1.0,
+      "p_value": null,
+      "f_stat": null,
+      "optimal_lag": null,
+      "significant": false,
+      "skipped": true,
+      "reason": "The x values include a column with constant values and so the test statistic cannot be computed."
+    },
+    "refund_rate\u2192margin_proxy": {
+      "p_value": 0.000652,
+      "f_stat": 7.639,
+      "optimal_lag": "2",
+      "significant": true,
+      "skipped": false,
+      "strength": 0.99
+    },
+    "refund_rate\u2192daily_revenue": {
+      "p_value": 0.389213,
+      "f_stat": 0.7449,
+      "optimal_lag": "1",
+      "significant": false,
+      "skipped": false,
+      "strength": 0.1
+    },
+    "daily_revenue\u2192margin_proxy": {
+      "p_value": 0.105361,
+      "f_stat": 2.6483,
+      "optimal_lag": "1",
+      "significant": false,
+      "skipped": false,
+      "strength": 0.1
+    },
+    "daily_expenses\u2192expense_ratio": {
+      "p_value": 0.001738,
+      "f_stat": 3.4603,
+      "optimal_lag": "7",
+      "significant": true,
+      "skipped": false,
+      "strength": 0.99
+    },
+    "expense_ratio\u2192margin_proxy": {
+      "p_value": 0.000651,
+      "f_stat": 7.6409,
+      "optimal_lag": "2",
+      "significant": true,
+      "skipped": false,
+      "strength": 0.99
+    },
+    "margin_proxy\u2192net_cash_proxy": {
+      "p_value": 5e-06,
+      "f_stat": 22.2331,
+      "optimal_lag": "1",
+      "significant": true,
+      "skipped": false,
+      "strength": 0.99
+    },
+    "ar_aging_amount\u2192net_cash_proxy": {
+      "p_value": 0.0,
+      "f_stat": 185.714,
+      "optimal_lag": "2",
+      "significant": true,
+      "skipped": false,
+      "strength": 0.99
+    }
+  },
+  "discovered_edges": {},
+  "summary": {
+    "edges_tested": 12,
+    "edges_skipped": 8,
+    "edges_significant": 5,
+    "mean_strength": 0.7357,
+    "new_edges_discovered": 0
+  }
+}

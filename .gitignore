@@ -63,6 +63,20 @@ data/*.db
 # MLflow
 mlruns/
 mlartifacts/
+mlflow.db
+
+# Large ML model binaries (>10MB — retrain with scripts/train_*.py)
+models/delivery/stacked_ensemble_late_delivery.joblib
+models/delivery/random_forest_late_delivery.joblib
+models/sentiment/random_forest.joblib
+
+# Large data files (>50MB — download from source)
+data/dataco/DataCoSupplyChainDataset.csv
+data/dataco/tokenized_access_logs.csv
+data/olist/olist_geolocation_dataset.csv
+
+# Nested git repos
+data/nab/
 
 # Reports
 reports/*.pdf

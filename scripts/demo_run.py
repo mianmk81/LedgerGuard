@@ -1,79 +1,113 @@
 #!/usr/bin/env python3
 """
-Run complete demo scenario for LedgerGuard.
+LedgerGuard Demo — Full project demo without QuickBooks credentials.
 
-This script demonstrates the full BRE workflow:
-1. Seed sample data
-2. Run anomaly detection
-3. Perform root cause analysis
-4. Map blast radius
-5. Generate postmortem report
+Runs the complete BRE workflow:
+1. Seeds 6 months of sample data (Bronze → Silver → Gold)
+2. Runs anomaly detection + RCA + blast radius + postmortems via API
+3. Prints access instructions
+
+Requires: API running (make dev or uvicorn api.main:app)
+Usage:
+    python scripts/demo_run.py              # Seed + run analysis
+    python scripts/demo_run.py --no-seed   # Skip seed (data already exists)
 """
 
-import asyncio
+import argparse
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import structlog
-from api.config import get_settings
-from api.utils.logging import configure_logging
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
-logger = structlog.get_logger(__name__)
 
-
-async def run_demo():
-    """Execute demo scenario."""
-    configure_logging()
-    settings = get_settings()
-
-    logger.info("demo_start", environment=settings.intuit_env)
-
-    # Step 1: Seed data
-    logger.info("demo_step", step=1, description="Seeding sample data")
-    await asyncio.sleep(1)
-    logger.info("demo_step_complete", step=1, entities_loaded=500)
-
-    # Step 2: Run detection
-    logger.info("demo_step", step=2, description="Running anomaly detection")
-    await asyncio.sleep(2)
-    logger.info("demo_step_complete", step=2, anomalies_detected=5)
-
-    # Step 3: Root cause analysis
-    logger.info("demo_step", step=3, description="Performing root cause analysis")
-    await asyncio.sleep(1.5)
-    logger.info("demo_step_complete", step=3, root_causes_identified=2)
-
-    # Step 4: Blast radius mapping
-    logger.info("demo_step", step=4, description="Mapping blast radius")
-    await asyncio.sleep(1)
-    logger.info("demo_step_complete", step=4, affected_entities=15, max_depth=3)
-
-    # Step 5: Generate postmortem
-    logger.info("demo_step", step=5, description="Generating postmortem report")
-    await asyncio.sleep(0.5)
-    logger.info("demo_step_complete", step=5, report_path="./reports/postmortem_001.pdf")
-
-    logger.info(
-        "demo_complete",
-        total_duration_seconds=6,
-        incidents_created=5,
-        reports_generated=5,
-    )
+def main():
+    parser = argparse.ArgumentParser(description="Run LedgerGuard demo (no QuickBooks required)")
+    parser.add_argument("--no-seed", action="store_true", help="Skip seeding; assume data exists")
+    parser.add_argument("--api-url", default="http://localhost:8000", help="API base URL")
+    args = parser.parse_args()
 
     print("\n" + "=" * 60)
-    print("DEMO COMPLETE")
+    print("LedgerGuard Demo")
     print("=" * 60)
-    print(f"Environment: {settings.intuit_env}")
-    print("Incidents detected: 5")
-    print("Root causes identified: 2")
-    print("Entities affected: 15")
-    print("Reports generated: 5")
-    print("\nAccess the dashboard at: http://localhost:3000")
-    print("API docs available at: http://localhost:8000/docs")
+
+    # Step 1: Seed data
+    if not args.no_seed:
+        print("\n[1/3] Seeding sample data (6 months)...")
+        seed_script = Path(__file__).parent / "seed_sandbox.py"
+        result = subprocess.run(
+            [sys.executable, str(seed_script), "--mode", "local"],
+            cwd=Path(__file__).parent.parent,
+        )
+        if result.returncode != 0:
+            print("\nSeeding failed. Fix errors above and retry.")
+            sys.exit(1)
+        print("  Seeding complete.\n")
+    else:
+        print("\n[1/3] Skipping seed (--no-seed).\n")
+
+    # Step 2: Get demo token and run analysis
+    if not httpx:
+        print("[2/3] Install httpx: pip install httpx")
+        print("      Then run analysis from the UI after clicking 'Try Demo'.")
+        print_done()
+        return
+
+    print("[2/3] Getting demo token and running analysis...")
+    base = args.api_url.rstrip("/")
+
+    with httpx.Client(timeout=60) as client:
+        # Get demo token
+        try:
+            r = client.post(f"{base}/api/v1/auth/demo-token")
+            r.raise_for_status()
+            token = r.json()["access_token"]
+        except Exception as e:
+            print(f"\n  Failed to get demo token: {e}")
+            print("  Make sure the API is running: uvicorn api.main:app --reload")
+            print("  And DEV_MODE=true in .env")
+            sys.exit(1)
+
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        # Run analysis
+        try:
+            r = client.post(
+                f"{base}/api/v1/analysis/run",
+                headers=headers,
+                json={"lookback_days": 90, "run_rca": True, "run_blast_radius": True, "run_postmortem": True},
+            )
+            r.raise_for_status()
+            data = r.json().get("data", r.json())
+            incidents = data.get("incidents_detected", 0)
+            run_id = data.get("run_id", "?")
+            print(f"  Analysis complete: {incidents} incidents detected (run_id={run_id})")
+        except Exception as e:
+            print(f"  Analysis request failed: {e}")
+            print("  You can still run analysis from the UI after clicking 'Try Demo'.")
+
+    print("\n[3/3] Done.")
+    print_done()
+
+
+def print_done():
+    print("\n" + "=" * 60)
+    print("DEMO READY")
     print("=" * 60)
+    print()
+    print("  1. Open the app:   http://localhost:3000  (or 5173 for Vite)")
+    print("  2. Click 'Try Demo' (no QuickBooks needed)")
+    print("  3. Explore: Dashboard, Incidents, Insights, Credit Pulse")
+    print("  4. Run analysis: POST /api/v1/analysis/run from the UI or API")
+    print()
+    print("  API docs:  http://localhost:8000/docs")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":
-    asyncio.run(run_demo())
+    main()

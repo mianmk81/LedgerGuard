@@ -1,0 +1,44 @@
+{
+  "model_name": "LightGBM Churn Classifier (Telco Industry)",
+  "model_type": "LightGBM",
+  "dataset": "IBM Telco Customer Churn \u2014 7,043 customers, 30 features",
+  "generated_at": "2026-02-21T20:28:07.585732Z",
+  "feature_count": 30,
+  "training_samples": 5634,
+  "test_samples": 1409,
+  "cv_folds": 5,
+  "metrics": {
+    "test": {
+      "f1": 0.645,
+      "precision": 0.543,
+      "recall": 0.7941,
+      "auc": 0.8512
+    },
+    "cv": {
+      "f1": {
+        "mean": 0.6657,
+        "std": 0.0147,
+        "ci95_half_width": 0.0129
+      },
+      "precision": {
+        "mean": 0.5568,
+        "std": 0.0141,
+        "ci95_half_width": 0.0124
+      },
+      "recall": {
+        "mean": 0.8277,
+        "std": 0.0162,
+        "ci95_half_width": 0.0142
+      },
+      "roc_auc": {
+        "mean": 0.8734,
+        "std": 0.0126,
+        "ci95_half_width": 0.011
+      }
+    }
+  },
+  "extra": {
+    "decision_threshold": 0.443,
+    "industry": "Telecom"
+  }
+}

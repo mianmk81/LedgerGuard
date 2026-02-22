@@ -1,91 +1,68 @@
 """
 Comparison and what-if simulation router.
+
+Wired to:
+- ComparatorEngine for incident comparison
+- SimulationEngine for what-if scenarios
 """
 
-from typing import Dict, List
+from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.auth.dependencies import get_current_realm_id
+from api.storage import get_storage
 from api.utils.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
+class IncidentCompareRequest(BaseModel):
+    """Request to compare two incidents."""
+
+    incident_a_id: str
+    incident_b_id: str
+
+
 class ScenarioParameter(BaseModel):
     """Scenario parameter modification."""
 
-    entity_type: str
     metric: str
-    change_percent: float
+    change: str  # e.g., "+50%", "-10%", "1500"
 
 
-class ComparisonRequest(BaseModel):
-    """Comparison scenario request."""
-
-    baseline_period: str
-    comparison_period: str
-    metrics: List[str]
-
-
-class ComparisonResult(BaseModel):
-    """Comparison result."""
-
-    metric: str
-    baseline_value: float
-    comparison_value: float
-    change_percent: float
-    change_absolute: float
-    significance: float
-
-
-class ComparisonResponse(BaseModel):
-    """Comparison response."""
-
-    comparison_id: str
-    baseline_period: str
-    comparison_period: str
-    results: List[ComparisonResult]
-
-
-@router.post("/compare", response_model=ComparisonResponse)
-async def compare_periods(
-    request: ComparisonRequest,
+@router.post("/compare")
+async def compare_incidents(
+    request: IncidentCompareRequest,
     realm_id: str = Depends(get_current_realm_id),
 ):
     """
-    Compare metrics between two time periods.
+    Compare two incidents to identify shared patterns and divergences.
+    Uses ComparatorEngine for systematic comparison.
     """
-    import uuid
-
-    comparison_id = str(uuid.uuid4())
-
     logger.info(
         "comparison_start",
         realm_id=realm_id,
-        comparison_id=comparison_id,
-        baseline=request.baseline_period,
-        comparison=request.comparison_period,
+        incident_a=request.incident_a_id,
+        incident_b=request.incident_b_id,
     )
 
-    # TODO: Run actual comparison analysis
-    return ComparisonResponse(
-        comparison_id=comparison_id,
-        baseline_period=request.baseline_period,
-        comparison_period=request.comparison_period,
-        results=[
-            ComparisonResult(
-                metric="total_revenue",
-                baseline_value=100000.0,
-                comparison_value=120000.0,
-                change_percent=20.0,
-                change_absolute=20000.0,
-                significance=0.95,
-            )
-        ],
-    )
+    from api.engine.comparator import ComparatorEngine
+
+    storage = get_storage()
+    comparator = ComparatorEngine(storage=storage)
+
+    try:
+        comparison = comparator.compare(
+            incident_a_id=request.incident_a_id,
+            incident_b_id=request.incident_b_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return {"success": True, "data": comparison.model_dump(mode="json")}
 
 
 @router.post("/whatif")
@@ -95,26 +72,27 @@ async def whatif_simulation(
 ):
     """
     Run what-if simulation with modified parameters.
+    Uses SimulationEngine for downstream impact prediction.
     """
-    import uuid
-
-    simulation_id = str(uuid.uuid4())
-
     logger.info(
         "whatif_simulation",
         realm_id=realm_id,
-        simulation_id=simulation_id,
         parameters_count=len(parameters),
     )
 
-    # TODO: Run simulation
-    return {
-        "simulation_id": simulation_id,
-        "parameters": [p.dict() for p in parameters],
-        "predicted_impact": {
-            "revenue_change": 15000.0,
-            "risk_score": 0.3,
-            "affected_entities": 25,
-        },
-        "confidence": 0.85,
-    }
+    from api.engine.simulation import WhatIfSimulator
+
+    storage = get_storage()
+    engine = WhatIfSimulator(storage=storage)
+
+    perturbations = [
+        {"metric": p.metric, "change": p.change}
+        for p in parameters
+    ]
+
+    try:
+        scenario = engine.simulate(perturbations=perturbations)
+        return {"success": True, "data": scenario.model_dump(mode="json")}
+    except Exception as e:
+        logger.error("whatif_simulation_failed", error=str(e))
+        raise HTTPException(status_code=422, detail=str(e))

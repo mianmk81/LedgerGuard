@@ -1,0 +1,55 @@
+{
+  "model_name": "LightGBM Trend Forecaster (8 metrics)",
+  "model_type": "LightGBM Regressor (per-metric)",
+  "dataset": "Synthetic Business Metrics \u2014 seeded Gold layer (DuckDB)",
+  "generated_at": "2026-02-21T20:31:53.419099Z",
+  "metrics_covered": [
+    "churn_proxy",
+    "delivery_delay_rate",
+    "fulfillment_backlog",
+    "margin_proxy",
+    "net_cash_proxy",
+    "refund_rate",
+    "supplier_delay_rate",
+    "ticket_backlog"
+  ],
+  "per_metric": {
+    "churn_proxy": {
+      "train_mae": 0.0,
+      "test_mae": 0.0
+    },
+    "delivery_delay_rate": {
+      "train_mae": 0.0,
+      "test_mae": 0.0
+    },
+    "fulfillment_backlog": {
+      "train_mae": 0.0,
+      "test_mae": 0.0
+    },
+    "margin_proxy": {
+      "train_mae": 0.025118,
+      "test_mae": 0.019999
+    },
+    "net_cash_proxy": {
+      "train_mae": 558532.395671,
+      "test_mae": 3396517.74107
+    },
+    "refund_rate": {
+      "train_mae": 0.111178,
+      "test_mae": 0.113035
+    },
+    "supplier_delay_rate": {
+      "train_mae": 0.0,
+      "test_mae": 0.0
+    },
+    "ticket_backlog": {
+      "train_mae": 0.0,
+      "test_mae": 0.0
+    }
+  },
+  "summary": {
+    "avg_test_mae": 424564.734263,
+    "avg_train_mae": 69816.566496,
+    "no_overfitting": false
+  }
+}

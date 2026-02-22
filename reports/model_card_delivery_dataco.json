@@ -1,0 +1,44 @@
+{
+  "model_name": "XGBoost Late Delivery Predictor (DataCo Industry)",
+  "model_type": "XGBoost",
+  "dataset": "DataCo Smart Supply Chain \u2014 180,519 orders, 29 engineered features",
+  "generated_at": "2026-02-21T20:31:23.103156Z",
+  "feature_count": 29,
+  "training_samples": 144415,
+  "test_samples": 36104,
+  "cv_folds": 5,
+  "metrics": {
+    "test": {
+      "f1": 0.7786,
+      "precision": 0.7052,
+      "recall": 0.8691,
+      "auc": 0.8452
+    },
+    "cv": {
+      "f1": {
+        "mean": 0.8561,
+        "std": 0.0009,
+        "ci95_half_width": 0.0008
+      },
+      "precision": {
+        "mean": 0.7829,
+        "std": 0.0014,
+        "ci95_half_width": 0.0012
+      },
+      "recall": {
+        "mean": 0.9445,
+        "std": 0.0016,
+        "ci95_half_width": 0.0014
+      },
+      "roc_auc": {
+        "mean": 0.9231,
+        "std": 0.0006,
+        "ci95_half_width": 0.0005
+      }
+    }
+  },
+  "extra": {
+    "decision_threshold": 0.3354,
+    "industry": "Supply Chain"
+  }
+}

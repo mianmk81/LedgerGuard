@@ -1,0 +1,44 @@
+{
+  "model_name": "Isolation Forest Anomaly Detector",
+  "model_type": "IsolationForest",
+  "dataset": "Olist Brazilian E-Commerce \u2014 daily aggregated time-series metrics",
+  "generated_at": "2026-02-20T00:18:35.120459Z",
+  "feature_count": 36,
+  "training_samples": 443,
+  "test_samples": 96,
+  "cv_folds": 5,
+  "metrics": {
+    "test": {
+      "f1": 0.3636,
+      "precision": 0.2222,
+      "recall": 1.0,
+      "auc": 1.0
+    },
+    "cv": {
+      "f1": {
+        "mean": 0.72,
+        "std": 0.2168,
+        "ci95_half_width": 0.19
+      },
+      "precision": {
+        "mean": 1.0,
+        "std": 0.0,
+        "ci95_half_width": 0.0
+      },
+      "recall": {
+        "mean": 0.6,
+        "std": 0.2789,
+        "ci95_half_width": 0.2445
+      },
+      "roc_auc": {
+        "mean": 1.0,
+        "std": 0.0,
+        "ci95_half_width": 0.0
+      }
+    }
+  },
+  "extra": {
+    "contamination": 0.02,
+    "pseudo_label_note": "Labels derived from model anomaly scores at contamination=0.02; no ground-truth anomaly labels available in this dataset."
+  }
+}

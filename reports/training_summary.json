@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-02-16T10:10:07.219666",
+  "total_duration_seconds": 15.2,
+  "total_models_trained": 3,
+  "total_models_expected": 3,
+  "pipelines": {
+    "churn": {
+      "status": "success",
+      "returncode": 0,
+      "duration_seconds": 15.2,
+      "models_trained": 3
+    }
+  }
+}

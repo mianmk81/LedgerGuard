@@ -1,31 +1,32 @@
 """
-Core Business Reliability Engine.
+Business Reliability Engine core components.
 
-Detection: Statistical + ML hybrid anomaly detection
-RCA: Root cause analysis using graph-based causal inference
-Blast Radius: Impact propagation through entity graphs
-Monitors: SLO evaluation and health scoring
+This package contains the core analytical engines that power the LedgerGuard
+platform, including:
+
+- Event transformation: Bronze → Silver canonical event normalization
+- State building: Silver → Gold daily business health metrics
+- Anomaly detection: Statistical, changepoint, and ML-based detection
+- Root cause analysis: Graph-based causal inference with temporal correlation
+- Blast radius mapping: Impact assessment across entity relationships
+- Monitor evaluation: SLO compliance checking and alert routing
+- Simulation: What-if scenario analysis and incident comparison
+
+All engine components are designed for:
+- High performance on analytical workloads (DuckDB optimized)
+- Comprehensive observability (structured logging with request IDs)
+- Type safety (complete Pydantic validation)
+- Testability (pure functions with dependency injection)
 """
 
-# Engine modules:
-# Detection:
-# - detection/statistical.py: Z-score, IQR, MAD detectors
-# - detection/changepoint.py: Ruptures integration
-# - detection/ml_detector.py: LightGBM classifier
-# - detection/ensemble.py: Weighted ensemble scoring
-#
-# RCA:
-# - rca/graph_builder.py: NetworkX entity graphs
-# - rca/temporal_correlation.py: Cross-correlation analysis
-# - rca/causal_ranker.py: PageRank-based ranking
-# - rca/explainer.py: Natural language explanations
-#
-# Blast Radius:
-# - blast_radius/mapper.py: Graph traversal
-# - blast_radius/impact_scorer.py: Impact quantification
-# - blast_radius/visualizer.py: Cytoscape JSON generation
-#
-# Monitors:
-# - monitors/slo_evaluator.py: SLO compliance
-# - monitors/alert_router.py: Alert routing
-# - monitors/health_scorer.py: Composite health scoring
+__version__ = "1.0.0"
+
+__all__ = [
+    "CanonicalEventBuilder",
+    "StateBuilder",
+    "ChurnClassifier",
+]
+
+from api.engine.churn_classifier import ChurnClassifier
+from api.engine.event_builder import CanonicalEventBuilder
+from api.engine.state_builder import StateBuilder

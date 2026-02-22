@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     celery_result_serializer: str = Field(default="json", description="Result serializer")
     celery_accept_content: str = Field(default="json", description="Accepted content types")
 
+    # ML model paths (trained by scripts/train_industry_*.py)
+    models_dir: str = Field(default="./models", description="Base directory for trained ML models")
+
     # MLflow
     mlflow_tracking_uri: str = Field(default="./mlruns", description="MLflow tracking URI")
     mlflow_experiment_name: str = Field(
@@ -81,6 +84,10 @@ class Settings(BaseSettings):
     )
 
     # Engine Configuration
+    anomaly_use_pretrained: bool = Field(
+        default=True,
+        description="Use pretrained NAB Isolation Forest instead of training at runtime",
+    )
     anomaly_detection_sensitivity: float = Field(
         default=0.85, ge=0.0, le=1.0, description="Anomaly detection sensitivity"
     )

@@ -1,50 +1,25 @@
 """
 Cascade/blast radius analysis router.
+
+Wired to:
+- BlastRadiusMapper for impact assessment
+- BlastRadiusVisualizer for Cytoscape graph generation
+- StorageBackend for incident/cascade queries
+
+Dual-layer graph: entity blast radius + causal metric DAG.
 """
 
-from typing import List
-
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
 
 from api.auth.dependencies import get_current_realm_id
+from api.engine.rca.causal_graph_builder import build_incident_causal_graph
+from api.storage import get_storage
 from api.utils.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
 
-
-class EntityNode(BaseModel):
-    """Entity graph node."""
-
-    id: str
-    type: str
-    label: str
-    impact_score: float
-    depth: int
-
-
-class EntityEdge(BaseModel):
-    """Entity graph edge."""
-
-    source: str
-    target: str
-    relationship: str
-    strength: float
-
-
-class BlastRadiusGraph(BaseModel):
-    """Blast radius graph visualization data."""
-
-    incident_id: str
-    root_entity: EntityNode
-    nodes: List[EntityNode]
-    edges: List[EntityEdge]
-    max_depth: int
-    total_affected: int
-
-
-@router.get("/{incident_id}", response_model=BlastRadiusGraph)
+@router.get("/{incident_id}")
 async def get_blast_radius(
     incident_id: str,
     realm_id: str = Depends(get_current_realm_id),
@@ -52,40 +27,63 @@ async def get_blast_radius(
 ):
     """
     Get blast radius graph for incident.
-    Returns Cytoscape-compatible graph structure.
+    Returns Cytoscape-compatible graph structure for interactive visualization.
     """
     logger.info(
-        "blast_radius_fetch", realm_id=realm_id, incident_id=incident_id, max_depth=max_depth
-    )
-
-    # TODO: Generate actual graph from NetworkX
-    root_node = EntityNode(
-        id="INV-001", type="invoice", label="Invoice #001", impact_score=1.0, depth=0
-    )
-
-    return BlastRadiusGraph(
+        "blast_radius_fetch",
+        realm_id=realm_id,
         incident_id=incident_id,
-        root_entity=root_node,
-        nodes=[
-            root_node,
-            EntityNode(
-                id="CUST-123",
-                type="customer",
-                label="Customer ABC Corp",
-                impact_score=0.8,
-                depth=1,
-            ),
-            EntityNode(
-                id="ACC-100", type="account", label="Accounts Receivable", impact_score=0.6, depth=2
-            ),
-        ],
-        edges=[
-            EntityEdge(source="INV-001", target="CUST-123", relationship="belongs_to", strength=1.0),
-            EntityEdge(source="INV-001", target="ACC-100", relationship="affects", strength=0.8),
-        ],
         max_depth=max_depth,
-        total_affected=3,
     )
+
+    storage = get_storage()
+
+    # Try to load pre-computed blast radius
+    blast_radius = storage.read_blast_radius(incident_id)
+
+    if blast_radius is None:
+        # Compute on-demand
+        incidents = storage.read_incidents()
+        incident = next(
+            (i for i in incidents if i.incident_id == incident_id), None
+        )
+        if incident is None:
+            raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
+
+        from api.engine.blast_radius import BlastRadiusMapper
+
+        mapper = BlastRadiusMapper(storage=storage)
+        blast_radius = mapper.compute_blast_radius(incident)
+
+    # Generate Cytoscape visualization
+    from api.engine.blast_radius import BlastRadiusVisualizer
+
+    visualizer = BlastRadiusVisualizer()
+
+    # Load incident for visualizer
+    incidents = storage.read_incidents()
+    incident = next(
+        (i for i in incidents if i.incident_id == incident_id), None
+    )
+
+    if incident:
+        events = storage.read_canonical_events(limit=500)
+        graph = visualizer.generate_graph(blast_radius, incident, events)
+    else:
+        # Incident was deleted after blast radius was computed
+        graph = {"nodes": [], "edges": []}
+
+    # Dual-layer: causal metric DAG centered on incident's primary metric
+    causal_graph = build_incident_causal_graph(incident) if incident else None
+
+    return {
+        "success": True,
+        "data": {
+            "blast_radius": blast_radius.model_dump(mode="json"),
+            "graph": graph,
+            "causal_graph": causal_graph,
+        },
+    }
 
 
 @router.get("/{incident_id}/impact")
@@ -98,15 +96,34 @@ async def get_cascade_impact(
     """
     logger.info("cascade_impact", realm_id=realm_id, incident_id=incident_id)
 
+    storage = get_storage()
+
+    blast_radius = storage.read_blast_radius(incident_id)
+    if blast_radius is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No blast radius data found for incident {incident_id}",
+        )
+
+    # Also load cascades
+    cascades = storage.read_cascades()
+    related_cascade = next(
+        (c for c in cascades if incident_id in c.incident_ids), None
+    )
+
     return {
-        "incident_id": incident_id,
-        "total_entities_affected": 15,
-        "financial_impact": 45000.0,
-        "by_entity_type": {
-            "invoice": {"count": 8, "impact": 30000.0},
-            "customer": {"count": 5, "impact": 12000.0},
-            "account": {"count": 2, "impact": 3000.0},
+        "success": True,
+        "data": {
+            "incident_id": incident_id,
+            "customers_affected": blast_radius.customers_affected,
+            "orders_affected": blast_radius.orders_affected,
+            "products_affected": blast_radius.products_affected,
+            "vendors_involved": blast_radius.vendors_involved,
+            "estimated_revenue_exposure": blast_radius.estimated_revenue_exposure,
+            "estimated_refund_exposure": blast_radius.estimated_refund_exposure,
+            "estimated_churn_exposure": blast_radius.estimated_churn_exposure,
+            "blast_radius_severity": blast_radius.blast_radius_severity.value,
+            "narrative": blast_radius.narrative,
+            "cascade": related_cascade.model_dump(mode="json") if related_cascade else None,
         },
-        "cascade_depth": 3,
-        "propagation_speed": "fast",
     }

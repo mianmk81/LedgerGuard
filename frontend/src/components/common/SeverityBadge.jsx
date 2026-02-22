@@ -2,28 +2,40 @@ import clsx from 'clsx'
 
 const severityConfig = {
   critical: {
-    bg: 'bg-red-100',
-    text: 'text-red-800',
-    border: 'border-red-200',
+    bg: 'bg-gradient-to-r from-red-500 to-red-600',
+    text: 'text-white',
+    border: 'border-red-600',
+    shadow: 'shadow-glow-danger',
+    dot: 'bg-white',
     label: 'Critical',
+    tooltip: 'Needs immediate action — could seriously impact your business',
   },
   high: {
-    bg: 'bg-orange-100',
-    text: 'text-orange-800',
-    border: 'border-orange-200',
+    bg: 'bg-gradient-to-r from-orange-400 to-orange-500',
+    text: 'text-white',
+    border: 'border-orange-500',
+    shadow: 'shadow-sm',
+    dot: 'bg-white',
     label: 'High',
+    tooltip: 'Significant problem — should be addressed soon',
   },
   medium: {
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-800',
-    border: 'border-yellow-200',
+    bg: 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+    text: 'text-gray-900',
+    border: 'border-yellow-500',
+    shadow: 'shadow-sm',
+    dot: 'bg-gray-900',
     label: 'Medium',
+    tooltip: 'Moderate issue — keep an eye on it and plan a fix',
   },
   low: {
-    bg: 'bg-green-100',
-    text: 'text-green-800',
-    border: 'border-green-200',
+    bg: 'bg-gradient-to-r from-green-400 to-green-500',
+    text: 'text-white',
+    border: 'border-green-500',
+    shadow: 'shadow-glow-success',
+    dot: 'bg-white',
     label: 'Low',
+    tooltip: 'Minor issue — not urgent but worth noting',
   },
 }
 
@@ -32,14 +44,17 @@ export default function SeverityBadge({ severity, className = '' }) {
 
   return (
     <span
+      title={config.tooltip}
       className={clsx(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all duration-200 cursor-help',
         config.bg,
         config.text,
         config.border,
+        config.shadow,
         className
       )}
     >
+      <span className={clsx('w-1.5 h-1.5 rounded-full animate-pulse', config.dot)} />
       {config.label}
     </span>
   )

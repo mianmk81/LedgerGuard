@@ -1,0 +1,34 @@
+{
+  "model_name": "LinearSVC Financial Sentiment Classifier",
+  "model_type": "LinearSVC (CalibratedClassifierCV Pipeline)",
+  "dataset": "FinancialPhraseBank \u2014 2,264 annotated financial sentences (neg/neu/pos)",
+  "generated_at": "2026-02-21T20:31:38.699750Z",
+  "feature_count": 0,
+  "training_samples": 1811,
+  "test_samples": 453,
+  "cv_folds": 5,
+  "metrics": {
+    "test": {
+      "accuracy": 0.9338,
+      "macro_f1": 0.9084,
+      "weighted_f1": 0.9326,
+      "f1": 0.9084
+    },
+    "cv": {
+      "f1": {
+        "mean": 0.9554,
+        "std": 0.014,
+        "ci95_half_width": 0.0123
+      }
+    }
+  },
+  "extra": {
+    "per_class_f1": {
+      "negative": 0.887,
+      "neutral": 0.9683,
+      "positive": 0.87
+    },
+    "industry": "Financial Services",
+    "note": "No ROC curve generated for multiclass; macro F1 reported as primary metric."
+  }
+}

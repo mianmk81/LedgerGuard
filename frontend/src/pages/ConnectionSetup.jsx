@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
-import { ExternalLink, CheckCircle } from 'lucide-react'
+import { ExternalLink, CheckCircle, Play } from 'lucide-react'
 
 export default function ConnectionSetup({ onLogin }) {
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [demoAvailable, setDemoAvailable] = useState(false)
+
+  useEffect(() => {
+    api.auth.demoAvailable().then((r) => setDemoAvailable(r.available)).catch(() => setDemoAvailable(false))
+  }, [])
 
   useEffect(() => {
     // Handle OAuth callback
@@ -48,6 +54,21 @@ export default function ConnectionSetup({ onLogin }) {
     }
   }
 
+  const handleTryDemo = async () => {
+    setDemoLoading(true)
+    setError(null)
+
+    try {
+      const response = await api.auth.demoToken()
+      onLogin(response.access_token, response.realm_id)
+    } catch (err) {
+      setError('Demo mode is not available. Make sure the API is running with DEV_MODE=true.')
+      console.error('Demo token error:', err)
+    } finally {
+      setDemoLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-6">
       <div className="max-w-md w-full">
@@ -73,6 +94,26 @@ export default function ConnectionSetup({ onLogin }) {
             </div>
           )}
 
+          {demoAvailable && (
+            <button
+              onClick={handleTryDemo}
+              disabled={demoLoading || loading}
+              className="w-full mb-4 btn btn-secondary flex items-center justify-center space-x-2 border-2 border-primary-200 bg-primary-50 hover:bg-primary-100"
+            >
+              {demoLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" />
+                  <span>Try Demo</span>
+                </>
+              )}
+            </button>
+          )}
+
           <button
             onClick={handleConnectQuickBooks}
             disabled={loading}
@@ -90,6 +131,12 @@ export default function ConnectionSetup({ onLogin }) {
               </>
             )}
           </button>
+
+          {demoAvailable && (
+            <p className="mt-3 text-xs text-gray-500 text-center">
+              No QuickBooks? Use <strong>Try Demo</strong> to explore with sample data.
+            </p>
+          )}
 
           {/* Features */}
           <div className="mt-8 space-y-3">

@@ -1,0 +1,4 @@
+Model,Accuracy,Macro F1,Weighted F1
+TF-IDF + Naive Bayes,0.8039,0.6682,0.8169
+TF-IDF + LR (Enhanced),0.7587,0.6496,0.7899
+TF-IDF + Random Forest,0.7851,0.6365,0.7939

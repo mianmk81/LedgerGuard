@@ -4,50 +4,136 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-surface-50 text-slate-800 antialiased;
+  }
+
+  /* Premium typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+
+  h1 {
+    @apply font-black;
+  }
+
+  h2 {
+    @apply font-bold;
+  }
+
+  /* Number display (scores, metrics) */
+  .metric-display {
+    @apply font-black tracking-tight;
+    font-feature-settings: 'tnum' 1;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply px-4 py-2.5 rounded-xl font-medium transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+    @apply bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900;
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+    @apply bg-white rounded-2xl shadow-card border border-slate-200/60 p-6
+           transition-all duration-300 hover:shadow-card-hover hover:border-slate-300/80
+           backdrop-blur-sm;
+  }
+
+  .card-interactive {
+    @apply card cursor-pointer hover:-translate-y-1 hover:shadow-xl active:translate-y-0
+           hover:border-primary-200/60;
+  }
+
+  .card-glass {
+    @apply bg-white/80 backdrop-blur-xl rounded-2xl shadow-soft border border-white/40 p-6
+           transition-all duration-300;
+  }
+
+  .card-premium {
+    @apply bg-gradient-to-br from-white to-slate-50/50 rounded-2xl shadow-hover
+           border border-slate-200/60 p-6 transition-all duration-300
+           hover:shadow-xl hover:from-white hover:to-primary-50/30;
   }
 
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-3 py-2.5 rounded-xl border border-slate-300
+           focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500
+           transition-colors duration-200;
   }
 
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
+
+  .nav-link {
+    @apply flex items-center px-3 py-2.5 rounded-xl transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-1;
+  }
+
+  .nav-link-active {
+    @apply bg-primary-50 text-primary-700 font-medium shadow-sm;
+  }
+
+  .nav-link-inactive {
+    @apply text-slate-600 hover:bg-slate-50 hover:text-slate-900;
+  }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - subtle, professional */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  @apply bg-slate-100;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full;
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
+/* Smooth focus visible for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+}
+
+@layer utilities {
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-fill-both { animation-fill-mode: both; }
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

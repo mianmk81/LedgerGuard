@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-// Create axios instance with base configuration
+const isDev = import.meta.env.DEV
+
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   timeout: 30000,
@@ -22,15 +23,14 @@ apiClient.interceptors.request.use(
     const requestId = crypto.randomUUID()
     config.headers['X-Request-ID'] = requestId
 
-    console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`, {
-      requestId,
-      params: config.params,
-    })
+    if (isDev) {
+      console.log(`[API] ${config.method.toUpperCase()} ${config.url}`, { requestId })
+    }
 
     return config
   },
   (error) => {
-    console.error('[API Request Error]', error)
+    if (isDev) console.error('[API Request Error]', error)
     return Promise.reject(error)
   }
 )
@@ -38,36 +38,35 @@ apiClient.interceptors.request.use(
 // Response interceptor - Handle errors and extract data
 apiClient.interceptors.response.use(
   (response) => {
-    const requestId = response.config.headers['X-Request-ID']
-    console.log(`[API Response] ${response.config.url}`, {
-      requestId,
-      status: response.status,
-    })
-    return response.data
+    // Unwrap BRE response envelope: {success, data} → data
+    const result = response.data
+    if (result && typeof result === 'object' && result.success !== undefined && result.data !== undefined) {
+      return result.data
+    }
+    return result
   },
   (error) => {
     const requestId = error.config?.headers['X-Request-ID']
 
     if (error.response) {
-      // Server responded with error status
-      console.error(`[API Error] ${error.config.url}`, {
-        requestId,
-        status: error.response.status,
-        data: error.response.data,
-      })
+      if (isDev) {
+        console.error(`[API Error] ${error.config?.url}`, {
+          requestId,
+          status: error.response.status,
+        })
+      }
 
-      // Handle 401 Unauthorized
       if (error.response.status === 401) {
         localStorage.removeItem('ledgerguard_token')
         localStorage.removeItem('ledgerguard_realm_id')
         window.location.href = '/setup'
       }
-    } else if (error.request) {
-      // Request made but no response
-      console.error('[API Error] No response received', { requestId })
-    } else {
-      // Error in request setup
-      console.error('[API Error]', error.message)
+    } else if (isDev) {
+      if (error.request) {
+        console.error('[API] No response received', { requestId })
+      } else {
+        console.error('[API]', error.message)
+      }
     }
 
     return Promise.reject(error)
@@ -83,6 +82,8 @@ export const api = {
       apiClient.get('/api/v1/auth/callback', { params: { code, state, realmId } }),
     refresh: (realmId) => apiClient.post('/api/v1/auth/refresh', { realm_id: realmId }),
     logout: () => apiClient.post('/api/v1/auth/logout'),
+    demoAvailable: () => apiClient.get('/api/v1/auth/demo-available'),
+    demoToken: () => apiClient.post('/api/v1/auth/demo-token'),
   },
 
   // Connection
@@ -111,6 +112,7 @@ export const api = {
     get: (incidentId) => apiClient.get(`/api/v1/incidents/${incidentId}`),
     getPostmortem: (incidentId, format = 'json') =>
       apiClient.get(`/api/v1/incidents/${incidentId}/postmortem`, { params: { format } }),
+    analyze: (incidentId) => apiClient.post(`/api/v1/incidents/${incidentId}/analyze`),
   },
 
   // Cascades
@@ -122,9 +124,12 @@ export const api = {
 
   // Monitors
   monitors: {
-    list: () => apiClient.get('/api/v1/monitors/'),
+    list: (params) => apiClient.get('/api/v1/monitors/', { params }),
     create: (data) => apiClient.post('/api/v1/monitors/', data),
     get: (monitorId) => apiClient.get(`/api/v1/monitors/${monitorId}`),
+    evaluate: () => apiClient.get('/api/v1/monitors/evaluate'),
+    alerts: (params) => apiClient.get('/api/v1/monitors/alerts', { params }),
+    toggle: (monitorId) => apiClient.put(`/api/v1/monitors/${monitorId}/toggle`),
     delete: (monitorId) => apiClient.delete(`/api/v1/monitors/${monitorId}`),
   },
 
@@ -138,6 +143,57 @@ export const api = {
   simulation: {
     run: (data) => apiClient.post('/api/v1/simulation/run', data),
     getHistory: (limit = 10) => apiClient.get('/api/v1/simulation/history', { params: { limit } }),
+  },
+
+  // Credit Pulse (SMB financial health score + explainability)
+  creditPulse: {
+    get: (lookbackDays = 7) =>
+      apiClient.get('/api/v1/credit-pulse', { params: { lookback_days: lookbackDays } }),
+  },
+
+  // Warnings (Risk Outlook — forward prediction, early warnings)
+  warnings: {
+    list: () => apiClient.get('/api/v1/warnings'),
+  },
+
+  // Insights (H4-H7 + extended)
+  insights: {
+    cashRunway: (lookbackDays = 60) =>
+      apiClient.get('/api/v1/insights/cash-runway', { params: { lookback_days: lookbackDays } }),
+    cashForecastCurve: (projectionMonths = 6, lookbackDays = 60) =>
+      apiClient.get('/api/v1/insights/cash-forecast-curve', {
+        params: { projection_months: projectionMonths, lookback_days: lookbackDays },
+      }),
+    invoiceDefaultRisk: (params = {}) =>
+      apiClient.get('/api/v1/insights/invoice-default-risk', { params }),
+    invoiceFollowUpPriorities: (topN = 5) =>
+      apiClient.get('/api/v1/insights/invoice-follow-up-priorities', { params: { top_n: topN } }),
+    supportTicketSentiment: (params = {}) =>
+      apiClient.get('/api/v1/insights/support-ticket-sentiment', { params }),
+    taxLiabilityEstimate: (params = {}) =>
+      apiClient.get('/api/v1/insights/tax-liability-estimate', { params }),
+    recommendations: (topN = 5) =>
+      apiClient.get('/api/v1/insights/recommendations', { params: { top_n: topN } }),
+    periodComparison: (period = 'month') =>
+      apiClient.get('/api/v1/insights/period-comparison', { params: { period } }),
+    scenarioExpense: (expenseCutPct = 10) =>
+      apiClient.get('/api/v1/insights/scenario-expense', {
+        params: { expense_cut_pct: expenseCutPct },
+      }),
+    scenarioInvoiceCollection: (topN = 5) =>
+      apiClient.get('/api/v1/insights/scenario-invoice-collection', { params: { top_n: topN } }),
+    recurringPatterns: (lookbackDays = 365) =>
+      apiClient.get('/api/v1/insights/recurring-patterns', { params: { lookback_days: lookbackDays } }),
+  },
+
+  // Dashboard (Reports + Future Score)
+  dashboard: {
+    reports: (limit = 5) =>
+      apiClient.get('/api/v1/dashboard/reports', { params: { limit } }),
+    futureScore: (projectionDays = 30) =>
+      apiClient.get('/api/v1/dashboard/future-score', {
+        params: { projection_days: projectionDays },
+      }),
   },
 
   // Metrics
@@ -156,6 +212,10 @@ export const api = {
     health: () => apiClient.get('/api/v1/system/health'),
     diagnostics: () => apiClient.get('/api/v1/system/diagnostics'),
     config: () => apiClient.get('/api/v1/system/config'),
+    models: () => apiClient.get('/api/v1/system/models'),
+    experiments: () => apiClient.get('/api/v1/system/experiments'),
+    modelCards: () => apiClient.get('/api/v1/system/model-cards'),
+    reportImage: (filename) => `${apiClient.defaults.baseURL}/api/v1/system/reports/${filename}`,
   },
 }
 

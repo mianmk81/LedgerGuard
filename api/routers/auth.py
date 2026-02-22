@@ -122,3 +122,50 @@ async def logout():
     """
     logger.info("user_logout")
     return {"success": True, "message": "Logged out successfully"}
+
+
+# ---------------------------------------------------------------------------
+# Demo mode (no QuickBooks required)
+# ---------------------------------------------------------------------------
+
+DEMO_REALM_ID = "demo"
+
+
+@router.get("/demo-available")
+async def demo_available():
+    """
+    Check if demo mode is available (DEV_MODE=true).
+    Frontend uses this to show "Try Demo" button.
+    """
+    settings = get_settings()
+    return {"available": settings.dev_mode, "realm_id": DEMO_REALM_ID}
+
+
+@router.post("/demo-token", response_model=TokenResponse)
+async def demo_token():
+    """
+    Issue a JWT for demo mode (no QuickBooks required).
+
+    Only available when DEV_MODE=true. Use for showcasing the full platform
+    with seeded sample data.
+    """
+    settings = get_settings()
+    if not settings.dev_mode:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demo mode is disabled. Set DEV_MODE=true for local demos.",
+        )
+
+    access_token = create_access_token(
+        data={"sub": DEMO_REALM_ID, "scopes": ["read:financials", "write:monitors"]},
+        expires_delta=timedelta(minutes=settings.jwt_expiration_minutes),
+    )
+
+    logger.info("demo_token_issued", realm_id=DEMO_REALM_ID)
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=settings.jwt_expiration_minutes * 60,
+        realm_id=DEMO_REALM_ID,
+    )

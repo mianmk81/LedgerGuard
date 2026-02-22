@@ -18,12 +18,17 @@ from api.routers import (
     cascades,
     comparison,
     connection,
+    credit_pulse,
+    dashboard,
     incidents,
     ingestion,
+    insights,
     metrics,
     monitors,
+    prediction,
     simulation,
     system,
+    warnings,
 )
 from api.utils.logging import configure_logging, get_logger
 
@@ -54,8 +59,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     os.makedirs("./data", exist_ok=True)
     os.makedirs("./mlruns", exist_ok=True)
     os.makedirs("./reports", exist_ok=True)
+    os.makedirs("./models", exist_ok=True)
 
-    logger.info("directories_created", paths=["./data", "./mlruns", "./reports"])
+    logger.info("directories_created", paths=["./data", "./mlruns", "./reports", "./models"])
 
     yield
 
@@ -140,6 +146,19 @@ def create_app() -> FastAPI:
                 headers={"X-Request-ID": request_id},
             )
 
+    # Root endpoints — avoid 404 when visiting backend URL directly
+    @app.get("/", tags=["System"])
+    async def root():
+        """Root redirect to API docs."""
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/docs", status_code=302)
+
+    @app.get("/api", tags=["System"])
+    @app.get("/api/v1", tags=["System"])
+    async def api_root():
+        """API root — return OpenAPI info."""
+        return {"message": "LedgerGuard API v1", "docs": "/docs", "health": "/health"}
+
     # Health check endpoint
     @app.get("/health", tags=["System"])
     async def health_check():
@@ -161,9 +180,14 @@ def create_app() -> FastAPI:
     app.include_router(comparison.router, prefix="/api/v1/comparison", tags=["Comparison"])
     app.include_router(simulation.router, prefix="/api/v1/simulation", tags=["Simulation"])
     app.include_router(metrics.router, prefix="/api/v1/metrics", tags=["Metrics"])
+    app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
+    app.include_router(credit_pulse.router, prefix="/api/v1/credit-pulse", tags=["Credit Pulse"])
+    app.include_router(warnings.router, prefix="/api/v1/warnings", tags=["Warnings"])
+    app.include_router(insights.router, prefix="/api/v1/insights", tags=["Insights"])
+    app.include_router(prediction.router, prefix="/api/v1/prediction", tags=["Prediction"])
     app.include_router(system.router, prefix="/api/v1/system", tags=["System"])
 
-    logger.info("application_configured", routers_count=11)
+    logger.info("application_configured", routers_count=15)
 
     return app
 

@@ -1,0 +1,10 @@
+name,category,f1,precision,recall
+ec2_cpu_utilization_24ae8d,realAWSCloudwatch,0.5,0.5,0.5
+ec2_cpu_utilization_ac20cd,realAWSCloudwatch,0.25,0.14285714285714285,1.0
+elb_request_count_8c0756,realAWSCloudwatch,0.0,0.0,0.0
+rds_cpu_utilization_cc0c53,realAWSCloudwatch,0.0,0.0,0.0
+ambient_temperature_system_failure,realKnownCause,0.0,0.0,0.0
+cpu_utilization_asg_misconfiguration,realKnownCause,0.0,0.0,0.0
+ec2_request_latency_system_failure,realKnownCause,0.6666666666666666,0.5,1.0
+machine_temperature_system_failure,realKnownCause,0.0,0.0,0.0
+nyc_taxi,realKnownCause,0.0,0.0,0.0

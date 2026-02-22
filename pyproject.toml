@@ -31,9 +31,15 @@ dependencies = [
     "python-dateutil>=2.8.2",
     "numpy>=1.26.2",
     "pandas>=2.1.4",
+    "shap>=0.43.0",
+    "statsmodels>=0.14.0",
 ]
 
 [project.optional-dependencies]
+ml = [
+    "torch>=2.0.0",
+    "xgboost>=2.0.0",
+]
 dev = [
     "black>=23.12.1",
     "ruff>=0.1.8",

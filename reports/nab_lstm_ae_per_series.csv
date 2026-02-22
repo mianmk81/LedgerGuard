@@ -1,0 +1,10 @@
+name,category,f1,precision,recall,threshold_percentile
+ec2_cpu_utilization_24ae8d,realAWSCloudwatch,0.0,0.0,0.0,99.5
+ec2_cpu_utilization_ac20cd,realAWSCloudwatch,0.004291845493562232,0.002150537634408602,1.0,99.5
+elb_request_count_8c0756,realAWSCloudwatch,0.0,0.0,0.0,99.5
+rds_cpu_utilization_cc0c53,realAWSCloudwatch,0.0033003300330033004,0.001652892561983471,1.0,99.5
+ambient_temperature_system_failure,realKnownCause,0.01904761904761905,0.009615384615384616,1.0,99.5
+cpu_utilization_asg_misconfiguration,realKnownCause,0.0025906735751295338,0.0012987012987012987,0.5,99.5
+ec2_request_latency_system_failure,realKnownCause,0.0,0.0,0.0,99.5
+machine_temperature_system_failure,realKnownCause,0.005509641873278237,0.0027624309392265192,1.0,99.5
+nyc_taxi,realKnownCause,0.10256410256410256,0.05405405405405406,1.0,99.5

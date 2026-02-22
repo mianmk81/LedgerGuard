@@ -1,83 +1,56 @@
 """
 Scenario simulation router.
+
+Wired to:
+- SimulationEngine for what-if analysis
+- StorageBackend for scenario persistence
 """
 
-from enum import Enum
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.auth.dependencies import get_current_realm_id
+from api.storage import get_storage
 from api.utils.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
-class SimulationType(str, Enum):
-    """Simulation types."""
-
-    MONTE_CARLO = "monte_carlo"
-    STRESS_TEST = "stress_test"
-    SCENARIO = "scenario"
-
-
 class SimulationRequest(BaseModel):
-    """Simulation request."""
+    """Simulation request with metric perturbations."""
 
-    simulation_type: SimulationType
-    iterations: int = 1000
-    parameters: Dict[str, float]
-    time_horizon_days: int = 90
+    perturbations: List[Dict]  # [{"metric": "order_volume", "change": "+50%"}]
 
 
-class SimulationResult(BaseModel):
-    """Simulation result."""
-
-    simulation_id: str
-    simulation_type: SimulationType
-    iterations: int
-    results: Dict[str, Dict[str, float]]  # metric -> {mean, std, p50, p95, p99}
-    risk_metrics: Dict[str, float]
-
-
-@router.post("/run", response_model=SimulationResult)
+@router.post("/run")
 async def run_simulation(
     request: SimulationRequest,
     realm_id: str = Depends(get_current_realm_id),
 ):
     """
-    Run scenario simulation.
+    Run scenario simulation with specified perturbations.
+    Uses SimulationEngine for downstream impact prediction.
     """
-    import uuid
-
-    simulation_id = str(uuid.uuid4())
-
     logger.info(
         "simulation_run",
         realm_id=realm_id,
-        simulation_id=simulation_id,
-        type=request.simulation_type.value,
-        iterations=request.iterations,
+        perturbation_count=len(request.perturbations),
     )
 
-    # TODO: Run actual simulation
-    return SimulationResult(
-        simulation_id=simulation_id,
-        simulation_type=request.simulation_type,
-        iterations=request.iterations,
-        results={
-            "revenue": {
-                "mean": 100000.0,
-                "std": 5000.0,
-                "p50": 99500.0,
-                "p95": 108000.0,
-                "p99": 112000.0,
-            }
-        },
-        risk_metrics={"var_95": 8000.0, "cvar_95": 10000.0, "max_drawdown": 15000.0},
-    )
+    from api.engine.simulation import WhatIfSimulator
+
+    storage = get_storage()
+    engine = WhatIfSimulator(storage=storage)
+
+    try:
+        scenario = engine.simulate(perturbations=request.perturbations)
+        return {"success": True, "data": scenario.model_dump(mode="json")}
+    except Exception as e:
+        logger.error("simulation_failed", error=str(e))
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.get("/history")
@@ -86,9 +59,15 @@ async def get_simulation_history(
     limit: int = 10,
 ):
     """
-    Get simulation history.
+    Get recent simulation history.
+    Note: WhatIfScenario retrieval is by ID; listing requires storage extension.
     """
     logger.info("simulation_history", realm_id=realm_id, limit=limit)
 
-    # TODO: Query from database
-    return {"simulations": []}
+    # Currently storage has read_whatif_scenario(scenario_id) but no list method.
+    # Return empty list with note about future extension.
+    return {
+        "success": True,
+        "data": [],
+        "message": "Simulation history listing will be available in a future release",
+    }

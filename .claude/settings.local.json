@@ -9,7 +9,8 @@
       "Grep",
       "Task",
       "Bash(npm install:*)",
-      "Bash(git -C threadweaver init:*)"
+      "Bash(git -C threadweaver init:*)",
+      "WebSearch"
     ]
   }
 }

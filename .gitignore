@@ -78,6 +78,9 @@ data/olist/olist_geolocation_dataset.csv
 # Nested git repos
 data/nab/
 
+# Claude Code internal files
+.claude/
+
 # Reports
 reports/*.pdf
 reports/*.html
